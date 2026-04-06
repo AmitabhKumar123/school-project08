@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>School Management</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f6f8;
+            margin: 0;
+        }
+
+        header {
+            background: #007bff;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 20px;
+        }
+
+        .container {
+            width: 80%;
+            margin: auto;
+            margin-top: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 2px 5px rgba(0,0,0,0.1);
+        }
+
+        input {
+            padding: 10px;
+            margin: 5px;
+            width: 200px;
+        }
+
+        button {
+            padding: 8px 12px;
+            margin: 5px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-edit {
+            background: orange;
+            color: white;
+        }
+
+        .btn-delete {
+            background: red;
+            color: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #007bff;
+            color: white;
+            padding: 10px;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr:hover {
+            background: #f1f1f1;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>🎓 School Management Dashboard</header>
+
+<div class="container">
+
+    <!-- Form Card -->
+    <div class="card">
+        <h3>Add / Update Student</h3>
+
+        <input id="name" placeholder="Name">
+        <input id="className" placeholder="Class">
+        <input id="email" placeholder="Email">
+
+        <button class="btn-primary" onclick="addStudent()">Save Student</button>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card">
+        <h3>Student List</h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Class</th>
+                    <th>Email</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="studentList"></tbody>
+        </table>
+    </div>
+
+</div>
+
+<script>
+
+const API = "http://localhost:8080/students";
+let currentId = null;
+
+// Add / Update
+function addStudent() {
+
+    const student = {
+        name: document.getElementById("name").value,
+        className: document.getElementById("className").value,
+        email: document.getElementById("email").value
+    };
+
+    let method = "POST";
+    let url = API;
+
+    if (currentId) {
+        method = "PUT";
+        url = API + "/" + currentId;
+    }
+
+    fetch(url, {
+        method: method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(student)
+    })
+    .then(() => {
+        loadStudents();
+        clearForm();
+        currentId = null;
+    });
+}
+
+// Load Students
+function loadStudents() {
+    fetch(API)
+    .then(res => res.json())
+    .then(data => {
+        const list = document.getElementById("studentList");
+        list.innerHTML = "";
+
+        data.data.forEach(s => {
+            const row = `
+                <tr>
+                    <td>${s.name}</td>
+                    <td>${s.className}</td>
+                    <td>${s.email}</td>
+                    <td>
+                        <button class="btn-edit" onclick="editStudent(${s.id}, \`${s.name}\`, \`${s.className}\`, \`${s.email}\`)">Edit</button>
+                        <button class="btn-delete" onclick="deleteStudent(${s.id})">Delete</button>
+                    </td>
+                </tr>
+            `;
+            list.innerHTML += row;
+        });
+    });
+}
+
+// Delete
+function deleteStudent(id) {
+    fetch(API + "/" + id, { method: "DELETE" })
+    .then(() => loadStudents());
+}
+
+// Edit
+function editStudent(id, name, className, email) {
+    document.getElementById("name").value = name;
+    document.getElementById("className").value = className;
+    document.getElementById("email").value = email;
+
+    currentId = id;
+}
+
+// Clear Form
+function clearForm() {
+    document.getElementById("name").value = "";
+    document.getElementById("className").value = "";
+    document.getElementById("email").value = "";
+}
+
+// Init
+loadStudents();
+
+</script>
+
+</body>
+</html>
